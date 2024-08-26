@@ -48,19 +48,32 @@ def search(request):
     keys = []
 
     if request.method == "POST":
-        searched = request.POST.get("searched", "")
-        keys = Product.objects.filter(name__contains=searched)
+        # Lấy dữ liệu tìm kiếm từ form và loại bỏ khoảng trắng thừa
+        searched = request.POST.get("searched", "").strip()
+        
+        # Sử dụng icontains để tìm kiếm không phân biệt chữ hoa chữ thường
+        keys = Product.objects.filter(name__icontains=searched)
 
-    cartItems = 0  # Giá trị mặc định của cartItems nếu người dùng không đăng nhập
+    # Giá trị mặc định của cartItems nếu người dùng không đăng nhập
+    cartItems = 0
 
-    # Lấy cartItems nếu người dùng đã đăng nhập
+    # Kiểm tra nếu người dùng đã đăng nhập để lấy số lượng sản phẩm trong giỏ hàng
     if request.user.is_authenticated:
         customer = request.user
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
         cartItems = order.get_cart_items
 
+    # Lấy danh sách các danh mục không phải là danh mục con
     categories = Category.objects.filter(is_sub=False)
-    return render(request, 'app/search.html', {"searched": searched, "keys": keys, 'categories': categories, "cartItems": cartItems})
+
+    # Trả về trang tìm kiếm với kết quả và các biến cần thiết
+    return render(request, 'app/search.html', {
+        "searched": searched,
+        "keys": keys,
+        "categories": categories,
+        "cartItems": cartItems
+    })
+
 
 
 
